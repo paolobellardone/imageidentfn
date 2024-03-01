@@ -1,6 +1,6 @@
 schema_version: 20180708
 name: imageidentfn
-version: 0.0.20
+version: 1.0.0
 runtime: java
 build_image: fnproject/fn-java-fdk-build:jdk17-1.0-latest
 run_image: fnproject/fn-java-fdk:jre17-1.0-latest

@@ -36,9 +36,9 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <fdk.version>1.0.169</fdk.version>
-        <oci.sdk.version>3.9.1</oci.sdk.version>
-        <jackson.version>2.14.2</jackson.version>
+        <fdk.version>1.0.184</fdk.version>
+        <oci.sdk.version>3.36.0</oci.sdk.version>
+        <jackson.version>2.16.0</jackson.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
     </properties>
@@ -132,7 +132,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.3</version>
+                <version>3.12.1</version>
                 <configuration>
                     <source>${maven.compiler.source}</source>
                     <target>${maven.compiler.target}</target>
@@ -141,7 +141,7 @@
             <plugin>
                  <groupId>org.apache.maven.plugins</groupId>
                  <artifactId>maven-surefire-plugin</artifactId>
-                 <version>2.22.1</version>
+                 <version>3.2.5</version>
                  <configuration>
                      <useSystemClassLoader>false</useSystemClassLoader>
                  </configuration>
