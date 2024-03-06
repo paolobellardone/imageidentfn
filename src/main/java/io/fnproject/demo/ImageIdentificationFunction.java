@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2023 PaoloB
+ * Copyright (c) 2023-24 PaoloB
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -58,13 +58,12 @@ import org.slf4j.LoggerFactory;
 /**
  * Main class that implements the image identification function.
  *
- * @version 1.3 6 Apr 2023
+ * @version 1.4 6 Mar 2024
  * @author PaoloB
  */
 public class ImageIdentificationFunction {
 
     // Variables to save the environment variables of the function
-
     private Boolean debug;    // DEBUG - Enables debugging informations in log files
     private String nameSpace; // OCI_NAMESPACE - Object Storage namespace
     private String bucketIn;  // BUCKET_IN - Bucket that emits events when an image is uploaded
@@ -77,8 +76,7 @@ public class ImageIdentificationFunction {
     private String ociResourcePrincipalPEM;     // OCI_RESOURCE_PRINCIPAL_PRIVATE_PEM
 
     // Authentication using Resource Principal
-    final ResourcePrincipalAuthenticationDetailsProvider provider = ResourcePrincipalAuthenticationDetailsProvider
-            .builder().build();
+    final ResourcePrincipalAuthenticationDetailsProvider provider = ResourcePrincipalAuthenticationDetailsProvider.builder().build();
 
     // Constants
     static final String ERRORMSG = "Error during the identification process, please check logs.";
@@ -138,7 +136,7 @@ public class ImageIdentificationFunction {
         ObjectStorage objStorageClient = null;
         objStorageClient = ObjectStorageClient.builder().build(provider);
 
-        // Check if the Ovject client is available, if not it exits with an error
+        // Check if the Object client is available, if not it exits with an error
         if (objStorageClient == null) {
             logger.error("There was a problem creating the ObjectStorageClient object. Please check logs.");
             return ERRORMSG;
@@ -170,10 +168,10 @@ public class ImageIdentificationFunction {
 
             // Get the file type, if it is an image then will be analyzed
             GetObjectResponse getObjectResponse = objStorageClient.getObject(GetObjectRequest.builder()
-                                                                                            .namespaceName(nameSpace)
-                                                                                            .bucketName(bucketIn)
-                                                                                            .objectName(fileName)
-                                                                                            .build());
+                                                                                             .namespaceName(nameSpace)
+                                                                                             .bucketName(bucketIn)
+                                                                                             .objectName(fileName)
+                                                                                             .build());
             String fileType = (new StringTokenizer(getObjectResponse.getContentType(), "/")).nextToken();
 
             if (fileType.equals("image")) {
@@ -211,11 +209,11 @@ public class ImageIdentificationFunction {
 
                 // Write the results in the resultsFile in object storage
                 PutObjectResponse putObjectResponse = objStorageClient.putObject(PutObjectRequest.builder()
-                                                                                                    .namespaceName(nameSpace)
-                                                                                                    .bucketName(bucketOut)
-                                                                                                    .objectName(resultsFile)
-                                                                                                    .putObjectBody(is)
-                                                                                                    .build());
+                                                                                                 .namespaceName(nameSpace)
+                                                                                                 .bucketName(bucketOut)
+                                                                                                 .objectName(resultsFile)
+                                                                                                 .putObjectBody(is)
+                                                                                                 .build());
 
                 if (putObjectResponse == null) {
                     logger.error("Error creating results file: {}", resultsFile);
@@ -243,7 +241,7 @@ public class ImageIdentificationFunction {
             }
 
         } catch (Exception e) {
-            logger.error("Error during thumbnail generation: {}", e.getMessage());
+            logger.error("Error during identification of image: {}", e.getMessage());
             return ERRORMSG;
         }
 
