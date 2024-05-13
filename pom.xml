@@ -36,9 +36,9 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <fdk.version>1.0.185</fdk.version>
-        <oci.sdk.version>3.37.0</oci.sdk.version>
-        <jackson.version>2.16.1</jackson.version>
+        <fdk.version>1.0.187</fdk.version>
+        <oci.sdk.version>3.41.1</oci.sdk.version>
+        <jackson.version>2.16.2</jackson.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
     </properties>
