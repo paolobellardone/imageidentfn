@@ -36,9 +36,9 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <fdk.version>1.0.187</fdk.version>
-        <oci.sdk.version>3.41.1</oci.sdk.version>
-        <jackson.version>2.16.2</jackson.version>
+        <fdk.version>1.0.217</fdk.version>
+        <oci.sdk.version>3.76.1</oci.sdk.version>
+        <jackson.version>2.20.1</jackson.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
     </properties>
@@ -101,9 +101,9 @@
             <artifactId>oci-java-sdk-common-httpclient-jersey</artifactId>
         </dependency>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.13.1</version>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.14.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -118,7 +118,7 @@
           <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-annotations</artifactId>
-            <version>${jackson.version}</version>
+            <version>2.20</version>
           </dependency>
           <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
