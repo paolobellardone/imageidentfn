@@ -60,9 +60,10 @@ steps:
     name: "Build the function image"
     timeoutInSeconds: 6000
     command: |
+      sed -i 's/docker/podman/g' ~/.fn/config.yaml
       cd ${OCI_PRIMARY_SOURCE_DIR}
       fn build --verbose
-      image=$(docker images | grep imageidentfn | awk -F ' ' '{print $3}') ; docker tag $image imageidentfn
+      image=$(podman images | grep imageidentfn | awk -F ' ' '{print $3}') ; podman tag $image imageidentfn
       export BUILD_RESULT=SUCCESS
     onFailure:
       - type: Command
