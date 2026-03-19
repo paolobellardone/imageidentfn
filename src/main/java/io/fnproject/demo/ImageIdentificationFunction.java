@@ -26,12 +26,6 @@
 
 package io.fnproject.demo;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.ser.FilterProvider;
-import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
-
 import com.fnproject.fn.api.FnConfiguration;
 import com.fnproject.fn.api.RuntimeContext;
 
@@ -47,13 +41,17 @@ import com.oracle.bmc.objectstorage.requests.*;
 import com.oracle.bmc.objectstorage.responses.*;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.StringTokenizer;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jakarta.json.bind.Jsonb;
+import jakarta.json.bind.JsonbBuilder;
+import jakarta.json.bind.JsonbConfig;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Main class that implements the image identification function.
@@ -62,6 +60,8 @@ import org.slf4j.LoggerFactory;
  * @author PaoloB
  */
 public class ImageIdentificationFunction {
+
+    private static final Logger LOGGER = Logger.getLogger(ImageIdentificationFunction.class.getName());
 
     // Variables to save the environment variables of the function
     private Boolean debug;    // DEBUG - Enables debugging informations in log files
@@ -121,15 +121,12 @@ public class ImageIdentificationFunction {
      */
     public String handleRequest(RuntimeContext ctx, String eventPayload) {
 
-        // Create a logger instance to print messages to System.err
-        Logger logger = LoggerFactory.getLogger(ImageIdentificationFunction.class);
-
         // Print out some configuration details for debugging purposes
         if (Boolean.TRUE.equals(debug)) {
-            logger.info("OCI_RESOURCE_PRINCIPAL_VERSION: {}", ociResourcePrincipalVersion);
-            logger.info("OCI_RESOURCE_PRINCIPAL_REGION: {}", ociResourcePrincipalRegion);
-            logger.info("OCI_RESOURCE_PRINCIPAL_RPST: {}", ociResourcePrincipalRPST);
-            logger.info("OCI_RESOURCE_PRINCIPAL_PRIVATE_PEM: {}", ociResourcePrincipalPEM);
+            LOGGER.log(Level.INFO, "OCI_RESOURCE_PRINCIPAL_VERSION: {0}", ociResourcePrincipalVersion);
+            LOGGER.log(Level.INFO, "OCI_RESOURCE_PRINCIPAL_REGION: {0}", ociResourcePrincipalRegion);
+            LOGGER.log(Level.INFO, "OCI_RESOURCE_PRINCIPAL_RPST: {0}", ociResourcePrincipalRPST);
+            LOGGER.log(Level.INFO, "OCI_RESOURCE_PRINCIPAL_PRIVATE_PEM: {0}", ociResourcePrincipalPEM);
         }
 
         // Create a client to access the Object Storage service
@@ -138,7 +135,7 @@ public class ImageIdentificationFunction {
 
         // Check if the Object client is available, if not it exits with an error
         if (objStorageClient == null) {
-            logger.error("There was a problem creating the ObjectStorageClient object. Please check logs.");
+            LOGGER.severe("There was a problem creating the ObjectStorageClient object. Please check logs.");
             return ERRORMSG;
         }
 
@@ -148,20 +145,22 @@ public class ImageIdentificationFunction {
 
         // Check if the OCI client is available, if not exits with an error
         if (aiVisionClient == null) {
-            logger.error("There was a problem creating the AIServiceVisionClient object. Please check logs.");
+            LOGGER.severe("There was a problem creating the AIServiceVisionClient object. Please check logs.");
             return ERRORMSG;
         }
 
         // If the OCI-related parameters are not defined the function cannot proceed
         if (nameSpace.isEmpty() || bucketIn.isEmpty() || bucketOut.isEmpty()) {
-            logger.error("The required environment variables OCI_NAMESPACE, BUCKET_IN, BUCKET_OUT are not defined. Please configure them before proceeding.");
+            LOGGER.severe("The required environment variables OCI_NAMESPACE, BUCKET_IN, BUCKET_OUT are not defined. Please configure them before proceeding.");
             return ERRORMSG;
         }
 
         try {
             // Unmarshal the payload into a Java class
-            ObjectMapper mapper = new ObjectMapper();
-            ObjectStorageCloudEvent osCloudEvent = mapper.readValue(eventPayload, ObjectStorageCloudEvent.class);
+            ObjectStorageCloudEvent osCloudEvent;
+            try (Jsonb jsonb = JsonbBuilder.create()) {
+                osCloudEvent = jsonb.fromJson(eventPayload, ObjectStorageCloudEvent.class);
+            }
 
             // Get the filename from the payload passed by Oracle Events
             String fileName = osCloudEvent.getData().get("resourceName").toString();
@@ -176,7 +175,7 @@ public class ImageIdentificationFunction {
 
             if (fileType.equals("image")) {
 
-                logger.info("Analyzing file: {}", fileName);
+                LOGGER.log(Level.INFO, "Analyzing file: {0}", fileName);
 
                 // Create an AnalyzeImageRequest and dependent object(s)
                 AnalyzeImageDetails analyzeImageDetails = AnalyzeImageDetails.builder()
@@ -193,19 +192,20 @@ public class ImageIdentificationFunction {
                 AnalyzeImageResponse analyzeImageResponse = aiVisionClient.analyzeImage(analyzeImageRequest);
                 AnalyzeImageResult analyzeImageResult = analyzeImageResponse.getAnalyzeImageResult();
 
-                // Configure the Jackson mapper to pretty print the results of the AI Vision analysis
-                mapper.enable(SerializationFeature.INDENT_OUTPUT);
-                FilterProvider filter = new SimpleFilterProvider().setFailOnUnknownId(false);
-                ObjectWriter writer = mapper.writer(filter);
-
                 // This file will contain the results of the analysis formatted in JSON
                 String resultsFile = fileName + POSTFIX;
 
-                logger.info("Writing results in file: {}", resultsFile);
+                LOGGER.log(Level.INFO, "Writing results in file: {0}", resultsFile);
 
-                // Input and output streams
-                ByteArrayOutputStream os = new ByteArrayOutputStream();
-                ByteArrayInputStream is = new ByteArrayInputStream(writer.writeValueAsString(analyzeImageResult).getBytes());
+                // Prepare the analysis result as formatted JSON
+                JsonbConfig jsonbConfig = new JsonbConfig().withFormatting(true);
+                String analyzeResultJson;
+                try (Jsonb jsonb = JsonbBuilder.create(jsonbConfig)) {
+                    analyzeResultJson = jsonb.toJson(analyzeImageResult);
+                }
+
+                // Input stream for the JSON payload
+                ByteArrayInputStream is = new ByteArrayInputStream(analyzeResultJson.getBytes(StandardCharsets.UTF_8));
 
                 // Write the results in the resultsFile in object storage
                 PutObjectResponse putObjectResponse = objStorageClient.putObject(PutObjectRequest.builder()
@@ -216,32 +216,31 @@ public class ImageIdentificationFunction {
                                                                                                  .build());
 
                 if (putObjectResponse == null) {
-                    logger.error("Error creating results file: {}", resultsFile);
+                    LOGGER.log(Level.SEVERE, "Error creating results file: {0}", resultsFile);
                     return ERRORMSG;
                 } else {
-                    logger.info("Created results file: {}", resultsFile);
+                    LOGGER.log(Level.INFO, "Created results file: {0}", resultsFile);
                 }
 
                 // Close the streams
                 is.close();
-                os.close();
 
                 // Close the OCI clients
                 objStorageClient.close();
                 aiVisionClient.close();
 
-                logger.info("Image identification completed, please see the output in bucket {}", bucketOut);
+                LOGGER.log(Level.INFO, "Image identification completed, please see the output in bucket {0}", bucketOut);
                 return "Image identification completed, please see the output in bucket " + bucketOut;
 
             } else {
 
-                logger.error("This file is not an image or is not a supported format.");
+                LOGGER.severe("This file is not an image or is not a supported format.");
                 return "This file is not an image or is not a supported format.";
 
             }
 
         } catch (Exception e) {
-            logger.error("Error during identification of image: {}", e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error during identification of image: {0}", e.getMessage());
             return ERRORMSG;
         }
 
