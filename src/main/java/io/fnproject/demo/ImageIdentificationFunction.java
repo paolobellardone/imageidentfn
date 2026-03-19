@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2023-24 PaoloB
+ * Copyright (c) 2023,2026 PaoloB
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,37 +26,40 @@
 
 package io.fnproject.demo;
 
-import com.fnproject.fn.api.FnConfiguration;
-import com.fnproject.fn.api.RuntimeContext;
-
-import com.oracle.bmc.auth.ResourcePrincipalAuthenticationDetailsProvider;
-import com.oracle.bmc.aivision.AIServiceVision;
-import com.oracle.bmc.aivision.AIServiceVisionClient;
-import com.oracle.bmc.aivision.model.*;
-import com.oracle.bmc.aivision.requests.*;
-import com.oracle.bmc.aivision.responses.*;
-import com.oracle.bmc.objectstorage.ObjectStorage;
-import com.oracle.bmc.objectstorage.ObjectStorageClient;
-import com.oracle.bmc.objectstorage.requests.*;
-import com.oracle.bmc.objectstorage.responses.*;
-
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.StringTokenizer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import com.fnproject.fn.api.FnConfiguration;
+import com.fnproject.fn.api.RuntimeContext;
+import com.oracle.bmc.aivision.AIServiceVision;
+import com.oracle.bmc.aivision.AIServiceVisionClient;
+import com.oracle.bmc.aivision.model.AnalyzeImageDetails;
+import com.oracle.bmc.aivision.model.AnalyzeImageResult;
+import com.oracle.bmc.aivision.model.ImageClassificationFeature;
+import com.oracle.bmc.aivision.model.ObjectStorageImageDetails;
+import com.oracle.bmc.aivision.requests.AnalyzeImageRequest;
+import com.oracle.bmc.aivision.responses.AnalyzeImageResponse;
+import com.oracle.bmc.auth.ResourcePrincipalAuthenticationDetailsProvider;
+import com.oracle.bmc.objectstorage.ObjectStorage;
+import com.oracle.bmc.objectstorage.ObjectStorageClient;
+import com.oracle.bmc.objectstorage.requests.GetObjectRequest;
+import com.oracle.bmc.objectstorage.requests.PutObjectRequest;
+import com.oracle.bmc.objectstorage.responses.GetObjectResponse;
+import com.oracle.bmc.objectstorage.responses.PutObjectResponse;
 
 import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;
 import jakarta.json.bind.JsonbConfig;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 /**
  * Main class that implements the image identification function.
  *
- * @version 1.4 6 Mar 2024
+ * @version 1.5 19 Mar 2026
  * @author PaoloB
  */
 public class ImageIdentificationFunction {
